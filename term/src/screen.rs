@@ -42,6 +42,8 @@ pub struct Screen {
     /// Physical, visible width of the screen
     pub physical_cols: usize,
     pub dpi: u32,
+
+    pub(crate) saved_cursor: Option<SavedCursor>,
 }
 
 fn scrollback_size(config: &Arc<dyn TerminalConfiguration>, allow_scrollback: bool) -> usize {
@@ -83,6 +85,7 @@ impl Screen {
             stable_row_index_offset: 0,
             dpi: size.dpi,
             keyboard_stack: vec![],
+            saved_cursor: None,
         }
     }
 

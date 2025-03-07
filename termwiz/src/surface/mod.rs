@@ -101,7 +101,7 @@ pub const SEQ_ZERO: SequenceNo = 0;
 /// difference between the updated screen and apply those changes to
 /// the render target, and then use `get_changes` to render those without
 /// repainting the world on each update.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Surface {
     width: usize,
     height: usize,

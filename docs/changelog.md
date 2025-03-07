@@ -189,10 +189,12 @@ As features stabilize some brief notes about them will accumulate here.
 * Windows: stack overflow when using `tmux -CC`. Thanks to @joexue! #6704 #6671
 * `get_text_from_semantic_zone` didn't include the last line of text. Thanks to
   @mgpinf! #6248 #5806 #5346
+* Deadlock when a domain detaches due to SSH timeout. Thanks to @joexue! #6749
+  #6750
 
 #### Updated
 * Bundled conpty.dll and OpenConsole.exe to build 1.22.250204002.nupkg
-* Bundled harfbuzz to 10.2.0
+* Bundled harfbuzz to 10.4.0
 * Bundled libssh to 0.11.1
 * Bundled freetype to 2.13.3
 * Bundled Nerd Font Symbols font to v3.3.0
