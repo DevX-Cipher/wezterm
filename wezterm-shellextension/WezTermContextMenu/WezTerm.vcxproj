@@ -24,9 +24,9 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{0066963d-454c-4573-aa8a-3cf3eb0e19f4}</ProjectGuid>
-    <RootNamespace>WEZTerm</RootNamespace>
+    <RootNamespace>WezTerm </RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>WEZtermShell</ProjectName>
+    <ProjectName>WezTermShellExtension</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

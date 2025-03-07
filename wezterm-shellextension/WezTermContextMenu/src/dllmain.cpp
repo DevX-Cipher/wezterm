@@ -15,10 +15,16 @@ using namespace Microsoft::WRL;
 HMODULE g_hModule = nullptr;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
-	if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
-		g_hModule = hModule;
-        }
-	return TRUE;
+    switch (ul_reason_for_call) {
+    case DLL_PROCESS_ATTACH:
+        g_hModule = hModule;
+        break;
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
 }
 /**
  * @brief WezTermCommand class implements the IExplorerCommand and IObjectWithSite interfaces.
@@ -101,59 +107,59 @@ public:
 * @return HRESULT indicating success (S_OK) or failure.
 */
 
-IFACEMETHODIMP Invoke(_In_opt_ IShellItemArray* selection, _In_opt_ IBindCtx*) noexcept try {
-    if (!selection) {
-        // Debug message
-        MessageBox(nullptr, L"Invalid argument", L"Debug Info", MB_OK);
-        return E_INVALIDARG;
+    IFACEMETHODIMP Invoke(_In_opt_ IShellItemArray* selection, _In_opt_ IBindCtx*) noexcept try {
+        if (!selection) {
+            // Debug message
+            MessageBox(nullptr, L"Invalid argument", L"Debug Info", MB_OK);
+            return E_INVALIDARG;
+        }
+
+        DWORD count;
+        RETURN_IF_FAILED(selection->GetCount(&count));
+
+        if (count == 0) {
+            // Debug message
+            MessageBox(nullptr, L"No items to process", L"Debug Info", MB_OK);
+            return S_OK; // No items to process
+        }
+
+        ComPtr<IShellItem> item;
+        RETURN_IF_FAILED(selection->GetItemAt(0, &item));
+
+        // Get the absolute path of the parent directory of the selected item
+        PWSTR parentDirPath;
+        RETURN_IF_FAILED(item->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &parentDirPath));
+        wil::unique_cotaskmem_string parentDirPathCleanup(parentDirPath);
+
+        // Debug: Display the absolute directory path in a message box
+        std::wstring message = L"Directory path: " + std::wstring(parentDirPath);
+
+        // Get the directory containing the DLL as the base path for wezterm-gui.exe
+        wchar_t dllDirectory[MAX_PATH];
+        GetModuleFileName(g_hModule, dllDirectory, MAX_PATH);
+        PathRemoveFileSpec(dllDirectory);
+
+        // Construct the full path to wezterm-gui.exe
+        std::wstring wezExePath = std::wstring(dllDirectory) + L"\\wezterm-gui.exe";
+
+        // Prepare the command-line argument (directory path)
+        std::wstring commandLineArgs = L"start --no-auto-connect --cwd \"" + std::wstring(parentDirPath) + L"\"";
+
+        // Launch wezterm-gui.exe with the directory path as a command-line argument
+        if (!ShellExecute(nullptr, L"open", wezExePath.c_str(), commandLineArgs.c_str(), nullptr, SW_SHOWNORMAL)) {
+            MessageBox(nullptr, L"Failed to execute wezterm-gui.exe", L"Error", MB_OK | MB_ICONERROR);
+            return E_FAIL;
+        }
+
+        return S_OK;
     }
+    CATCH_RETURN();
 
-    DWORD count;
-    RETURN_IF_FAILED(selection->GetCount(&count));
 
-    if (count == 0) {
-        // Debug message
-        MessageBox(nullptr, L"No items to process", L"Debug Info", MB_OK);
-        return S_OK; // No items to process
-    }
 
-    ComPtr<IShellItem> item;
-    RETURN_IF_FAILED(selection->GetItemAt(0, &item));
 
-    PWSTR filePath;
-    RETURN_IF_FAILED(item->GetDisplayName(SIGDN_FILESYSPATH, &filePath));
-    wil::unique_cotaskmem_string filePathCleanup(filePath);
 
-    // Debug: Display the file path in a message box
-    std::wstring message = L"File path: " + std::wstring(filePath);
-   // MessageBox(nullptr, message.c_str(), L"Debug Information", MB_OK);
 
-    // Get the directory containing the DLL as the base path for WezTerm-gui.exe
-    wchar_t dllDirectory[MAX_PATH];
-    GetModuleFileName(g_hModule, dllDirectory, MAX_PATH);
-    PathRemoveFileSpec(dllDirectory);
-
-    // Construct the full path to WezTerm-gui.exe
-    std::wstring wezExePath = std::wstring(dllDirectory) + L"\\wezterm-gui.exe";
-
-    // Check if WezTerm-gui.exe exists at the specified path
-    if (GetFileAttributes(wezExePath.c_str()) == INVALID_FILE_ATTRIBUTES) {
-        MessageBox(nullptr, L"WezTerm-gui.exe not found", L"Error", MB_OK | MB_ICONERROR);
-        return E_FAIL;
-    }
-
-    // Prepare the command-line argument (file path)
-    std::wstring commandLineArgs = L"\"" + std::wstring(filePath) + L"\"";
-
-    // Launch WezTerm-gui.exe with the file path as a command-line argument
-    if (!ShellExecute(nullptr, L"open", wezExePath.c_str(), commandLineArgs.c_str(), nullptr, SW_SHOWNORMAL)) {
-        MessageBox(nullptr, L"Failed to execute WezTerm-gui.exe", L"Error", MB_OK | MB_ICONERROR);
-        return E_FAIL;
-    }
-
-    return S_OK;
-}
-CATCH_RETURN();
 
 	IFACEMETHODIMP GetFlags(_Out_ EXPCMDFLAGS* flags) { *flags = ECF_DEFAULT; return S_OK; }
 	IFACEMETHODIMP EnumSubCommands(_COM_Outptr_ IEnumExplorerCommand** enumCommands) { *enumCommands = nullptr; return E_NOTIMPL; }
@@ -167,10 +173,6 @@ protected:
 };
 
 class __declspec(uuid("7A1E471F-0D43-4122-B1C4-D1AACE76CE9B")) WezTermCommand1 final : public WezTermCommand {
-	//Testing 
-	//public:
-	//const wchar_t* Title() override { return L"HelloWorld Command1"; }
-	//const EXPCMDSTATE State(_In_opt_ IShellItemArray* selection) override { return ECS_DISABLED; }
 };
 
 CoCreatableClass(WezTermCommand1)

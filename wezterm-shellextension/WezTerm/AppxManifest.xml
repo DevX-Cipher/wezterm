@@ -42,15 +42,15 @@
           <desktop4:FileExplorerContextMenus>
             <!-- Context menu for directory background -->
             <desktop5:ItemType Type="Directory\Background">
-              <desktop5:Verb Id="Command1" Clsid="7A1E471F-0D43-4122-B1C4-D1AACE76CE9B"/>
+              <desktop5:Verb Id="OpenWezTerm" Clsid="7A1E471F-0D43-4122-B1C4-D1AACE76CE9B"/>
             </desktop5:ItemType>
             <!-- Context menu for directories -->
             <desktop5:ItemType Type="Directory">
-              <desktop5:Verb Id="Command1" Clsid="7A1E471F-0D43-4122-B1C4-D1AACE76CE9B"/>
+              <desktop5:Verb Id="OpenWezTerm" Clsid="7A1E471F-0D43-4122-B1C4-D1AACE76CE9B"/>
             </desktop5:ItemType>
             <!-- Context menu for drives -->
             <desktop10:ItemType Type="Drive">
-              <desktop10:Verb Id="Command1" Clsid="7A1E471F-0D43-4122-B1C4-D1AACE76CE9B"/>
+              <desktop10:Verb Id="OpenWezTerm" Clsid="7A1E471F-0D43-4122-B1C4-D1AACE76CE9B"/>
             </desktop10:ItemType>
           </desktop4:FileExplorerContextMenus>
         </desktop4:Extension>
@@ -70,15 +70,4 @@
   <Capabilities>
     <rescap:Capability Name="runFullTrust"/>
   </Capabilities>
-  
-  <build:Metadata>
-    <build:Item Name="Microsoft.Build.DesktopBridge.Tasks.dll" Version="17.6.36265.37517"/>
-    <build:Item Name="TargetFrameworkMoniker" Value=".NETFramework,Version=v4.5.1"/>
-    <build:Item Name="VisualStudio" Version="17.0"/>
-    <build:Item Name="VisualStudioEdition" Value="Microsoft Visual Studio Professional 2022"/>
-    <build:Item Name="OperatingSystem" Version="10.0.22621.1991 (WinBuild.160101.0800)"/>
-    <build:Item Name="Microsoft.Build.AppxPackage.dll" Version="17.6.36415.52745"/>
-    <build:Item Name="ProjectGUID" Value="c166c715-5db3-4d2a-a65d-2002c0b8d705"/>
-    <build:Item Name="makepri.exe" Version="10.0.22621.755 (WinBuild.160101.0800)"/>
-  </build:Metadata>
 </Package>
