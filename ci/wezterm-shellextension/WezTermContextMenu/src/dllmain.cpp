@@ -26,6 +26,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     }
     return TRUE;
 }
+
+
 /**
  * @brief WezTermCommand class implements the IExplorerCommand and IObjectWithSite interfaces.
  */
@@ -110,16 +112,17 @@ public:
     IFACEMETHODIMP Invoke(_In_opt_ IShellItemArray* selection, _In_opt_ IBindCtx*) noexcept try {
         if (!selection) {
             // Debug message
-            MessageBox(nullptr, L"Invalid argument", L"Debug Info", MB_OK);
+            MessageBox(nullptr, L"Selection is nil. Please select a valid item.", L"WezTerm Shell Extension", MB_OK);
             return E_INVALIDARG;
         }
+
 
         DWORD count;
         RETURN_IF_FAILED(selection->GetCount(&count));
 
         if (count == 0) {
             // Debug message
-            MessageBox(nullptr, L"No items to process", L"Debug Info", MB_OK);
+            MessageBox(nullptr, L"No items to process", L"WezTerm Shell Extension", MB_OK);
             return S_OK; // No items to process
         }
 
@@ -147,19 +150,37 @@ public:
 
         // Launch wezterm-gui.exe with the directory path as a command-line argument
         if (!ShellExecute(nullptr, L"open", wezExePath.c_str(), commandLineArgs.c_str(), nullptr, SW_SHOWNORMAL)) {
-            MessageBox(nullptr, L"Failed to execute wezterm-gui.exe", L"Error", MB_OK | MB_ICONERROR);
+            // Retrieve the error code from GetLastError
+            DWORD errorCode = GetLastError();
+
+            // Convert error code
+            LPVOID lpMsgBuf;
+            FormatMessage(
+                FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                nullptr,
+                errorCode,
+                MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPWSTR)&lpMsgBuf,
+                0, nullptr);
+
+            // Prepare the error message
+            std::wstring errorMessage = L"Failed to execute wezterm-gui.exe\n";
+            errorMessage += L"Executable Path: " + wezExePath + L"\n";
+            errorMessage += L"Error: " + std::wstring((wchar_t*)lpMsgBuf);
+
+            // Display the error message with additional context
+            MessageBox(nullptr, errorMessage.c_str(), L"Error", MB_OK | MB_ICONERROR);
+
+            // Free the message buffer allocated by FormatMessage
+            LocalFree(lpMsgBuf);
+
             return E_FAIL;
         }
+
 
         return S_OK;
     }
     CATCH_RETURN();
-
-
-
-
-
-
 
 	IFACEMETHODIMP GetFlags(_Out_ EXPCMDFLAGS* flags) { *flags = ECF_DEFAULT; return S_OK; }
 	IFACEMETHODIMP EnumSubCommands(_COM_Outptr_ IEnumExplorerCommand** enumCommands) { *enumCommands = nullptr; return E_NOTIMPL; }
