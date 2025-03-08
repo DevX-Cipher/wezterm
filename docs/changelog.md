@@ -97,6 +97,7 @@ As features stabilize some brief notes about them will accumulate here.
 * [quick_select_remove_styling](config/lua/config/quick_select_remove_styling.md)
   option to make it easier to spot matches on colorful screens. Thanks to
   @mgpinf! #6683 #4022
+* `tmux -CC` support is now very usable. Thanks to @joexue! #6602 #336
 
 #### Fixed
 * Race condition when very quickly adjusting font scale, and other improvements
