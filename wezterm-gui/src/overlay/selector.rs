@@ -1,4 +1,4 @@
-use super::quickselect;
+use crate::overlay::quickselect;
 use crate::scripting::guiwin::GuiWin;
 use config::keyassignment::{InputSelector, InputSelectorEntry, KeyAssignment};
 use mux::termwiztermtab::TermWizTerminal;
@@ -146,6 +146,8 @@ impl SelectorState {
                 } else {
                     changes.push(Change::Text(" ".repeat(max_label_len + 3)));
                 }
+            } else if !self.always_fuzzy {
+                changes.push(Change::Text(" ".repeat(max_label_len + 3)));
             } else {
                 changes.push(Change::Text("    ".to_string()));
             }
