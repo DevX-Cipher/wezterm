@@ -9,7 +9,7 @@
 #include <Shobjidl.h>
 #include <string>
 
-
+#include "../include/helper.h"
 
 using namespace Microsoft::WRL;
 HMODULE g_hModule = nullptr;
@@ -48,26 +48,26 @@ public:
 		*name = title.release();
 		return S_OK;
 	}
-/**
-* @brief GetIcon retrieves the icon path for the context menu item.
-*
-* This method obtains the icon path for the context menu item based on the selected items in the shell.
-*
-* @param items The selected items in the shell.
-* @param iconPath Output parameter to receive the icon path.
-* @return HRESULT indicating success (S_OK) or failure (E_FAIL).
-*/
+    /**
+     * @brief Retrieves the icon path for the specified shell items.
+     *
+     * This method computes the full path to wezterm-gui.exe using the PathHelper class,
+     * formats the icon resource path, and returns it via the iconPath parameter.
+     *
+     * @param items A pointer to an IShellItemArray representing the selected shell items.
+     * @param iconPath A pointer to a PWSTR that will receive the icon path.
+     * @return HRESULT The result of the operation.
+     */
     IFACEMETHODIMP GetIcon(_In_opt_ IShellItemArray* items, _Outptr_result_nullonfailure_ PWSTR* iconPath) {
         *iconPath = nullptr;
 
-        WCHAR modulePath[MAX_PATH];
-        if (GetModuleFileNameW(g_hModule, modulePath, ARRAYSIZE(modulePath))) {
-            PathRemoveFileSpecW(modulePath);
-            StringCchCatW(modulePath, ARRAYSIZE(modulePath), L"\\wezterm-gui.exe");
+        PathHelper pathHelper;
+        std::wstring modulePath = pathHelper.ModulePath();
 
+        if (!modulePath.empty()) {
             // Format icon path to use the embedded resource
             WCHAR iconResourcePath[MAX_PATH];
-            StringCchPrintfW(iconResourcePath, ARRAYSIZE(iconResourcePath), L"%s,0", modulePath);
+            pathHelper.FormatIconResourcePath(modulePath.c_str(), iconResourcePath, ARRAYSIZE(iconResourcePath));
 
             auto iconPathStr = wil::make_cotaskmem_string_nothrow(iconResourcePath);
             if (iconPathStr) {
@@ -75,10 +75,9 @@ public:
                 return S_OK;
             }
         }
+
         return E_FAIL;
     }
-
-
 
 	IFACEMETHODIMP GetToolTip(_In_opt_ IShellItemArray*, _Outptr_result_nullonfailure_ PWSTR* infoTip) { *infoTip = nullptr; return E_NOTIMPL; }
 	IFACEMETHODIMP GetCanonicalName(_Out_ GUID* guidCommandName) { *guidCommandName = GUID_NULL; return S_OK; }
@@ -116,7 +115,6 @@ public:
             return E_INVALIDARG;
         }
 
-
         DWORD count;
         RETURN_IF_FAILED(selection->GetCount(&count));
 
@@ -126,6 +124,12 @@ public:
             return S_OK; // No items to process
         }
 
+        if (count > 1) {
+            // Inform the user that only the first item will be processed
+            MessageBox(nullptr, L"Multiple items selected. Only the first item will be processed.", L"WezTerm Shell Extension", MB_OK);
+        }
+
+        // Process the first item
         ComPtr<IShellItem> item;
         RETURN_IF_FAILED(selection->GetItemAt(0, &item));
 
@@ -137,13 +141,15 @@ public:
         // Debug: Display the absolute directory path in a message box
         std::wstring message = L"Directory path: " + std::wstring(parentDirPath);
 
-        // Get the directory containing the DLL as the base path for wezterm-gui.exe
-        wchar_t dllDirectory[MAX_PATH];
-        GetModuleFileName(g_hModule, dllDirectory, MAX_PATH);
-        PathRemoveFileSpec(dllDirectory);
 
-        // Construct the full path to wezterm-gui.exe
-        std::wstring wezExePath = std::wstring(dllDirectory) + L"\\wezterm-gui.exe";
+        // Use PathHelper to get the directory containing the DLL as the base path for wezterm-gui.exe
+        PathHelper pathHelper;
+        std::wstring wezExePath = pathHelper.ModulePath();
+
+        if (wezExePath.empty()) {
+            MessageBox(nullptr, L"Failed to construct wezterm-gui.exe path", L"Error", MB_OK | MB_ICONERROR);
+            return E_FAIL;
+        }
 
         // Prepare the command-line argument (directory path)
         std::wstring commandLineArgs = L"start --no-auto-connect --cwd \"" + std::wstring(parentDirPath) + L"\"";
