@@ -263,8 +263,12 @@ fn set_socket_buffer(fd: &mut FileDescriptor, option: i32, size: usize) -> anyho
 
 fn allocate_socketpair() -> anyhow::Result<(FileDescriptor, FileDescriptor)> {
     let (mut tx, mut rx) = socketpair().context("socketpair")?;
-    set_socket_buffer(&mut tx, SO_SNDBUF, BUFSIZE).context("SO_SNDBUF")?;
-    set_socket_buffer(&mut rx, SO_RCVBUF, BUFSIZE).context("SO_RCVBUF")?;
+    set_socket_buffer(&mut tx, SO_SNDBUF, BUFSIZE)
+        .context("SO_SNDBUF")
+        .ok();
+    set_socket_buffer(&mut rx, SO_RCVBUF, BUFSIZE)
+        .context("SO_RCVBUF")
+        .ok();
     Ok((tx, rx))
 }
 

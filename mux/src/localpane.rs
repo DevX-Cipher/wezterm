@@ -172,7 +172,11 @@ impl Pane for LocalPane {
     }
 
     fn get_keyboard_encoding(&self) -> KeyboardEncoding {
-        self.terminal.lock().get_keyboard_encoding()
+        if self.tmux_domain.lock().is_some() {
+            KeyboardEncoding::Xterm
+        } else {
+            self.terminal.lock().get_keyboard_encoding()
+        }
     }
 
     fn get_current_seqno(&self) -> SequenceNo {
@@ -395,7 +399,7 @@ impl Pane for LocalPane {
     fn key_down(&self, key: KeyCode, mods: KeyModifiers) -> Result<(), Error> {
         Mux::get().record_input_for_current_identity();
         if self.tmux_domain.lock().is_some() {
-            log::error!("key: {:?}", key);
+            log::trace!("key: {:?}", key);
             if key == KeyCode::Char('q') {
                 self.terminal.lock().send_paste("detach\n")?;
             }
