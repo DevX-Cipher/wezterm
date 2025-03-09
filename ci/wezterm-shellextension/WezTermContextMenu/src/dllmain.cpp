@@ -15,6 +15,54 @@ using namespace Microsoft::WRL;
 HMODULE g_hModule = nullptr;
 
 
+/**
+ * @brief The pragma directives below are used to instruct the linker to export the specified functions 
+ * with the correct names and calling conventions. This ensures that the functions are available for 
+ * external use without needing a .def file.
+ */
+#pragma comment(linker, "/export:DllCanUnloadNow=DllCanUnloadNow")
+#pragma comment(linker, "/export:DllGetClassObject=DllGetClassObject")
+#pragma comment(linker, "/export:DllGetActivationFactory=DllGetActivationFactory")
+
+/**
+ * @brief DllGetActivationFactory retrieves the activation factory for the specified class.
+ * 
+ * This function is called to get the activation factory for the specified class identifier (CLSID).
+ * 
+ * @param activatableClassId The class identifier.
+ * @param factory Output parameter to receive the activation factory.
+ * @return HRESULT indicating success (S_OK) or failure.
+ */
+extern "C" HRESULT DllGetActivationFactory(HSTRING activatableClassId, IActivationFactory** factory) {
+    return Module<ModuleType::InProc>::GetModule().GetActivationFactory(activatableClassId, factory);
+}
+
+/**
+ * @brief DllCanUnloadNow checks if the DLL can be unloaded from memory.
+ * 
+ * This function is called to check whether the DLL can be safely unloaded from memory.
+ * 
+ * @return S_OK if the DLL can be unloaded, S_FALSE otherwise.
+ */
+extern "C" HRESULT DllCanUnloadNow() {
+    return Module<InProc>::GetModule().GetObjectCount() == 0 ? S_OK : S_FALSE;
+}
+
+/**
+ * @brief DllGetClassObject retrieves the class factory for the specified class.
+ * 
+ * This function is called to get the class factory for the specified class identifier (CLSID).
+ * 
+ * @param rclsid The class identifier.
+ * @param riid The interface identifier.
+ * @param instance Output parameter to receive the class factory instance.
+ * @return HRESULT indicating success (S_OK) or failure.
+ */
+extern "C" HRESULT DllGetClassObject(REFCLSID rclsid, REFIID riid, void** instance) {
+    return Module<InProc>::GetModule().GetClassObject(rclsid, riid, instance);
+}
+
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
     if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
         g_hModule = hModule;
@@ -42,16 +90,16 @@ public:
 		*name = title.release();
 		return S_OK;
 	}
-    /**
-     * @brief Retrieves the icon path for the specified shell items.
-     *
-     * This method computes the full path to wezterm-gui.exe using the PathHelper class,
-     * formats the icon resource path, and returns it via the iconPath parameter.
-     *
-     * @param items A pointer to an IShellItemArray representing the selected shell items.
-     * @param iconPath A pointer to a PWSTR that will receive the icon path.
-     * @return HRESULT The result of the operation.
-     */
+/**
+* @brief Retrieves the icon path for the specified shell items.
+*
+* This method computes the full path to wezterm-gui.exe using the PathHelper class,
+* formats the icon resource path, and returns it via the iconPath parameter.
+*
+* @param items A pointer to an IShellItemArray representing the selected shell items.
+* @param iconPath A pointer to a PWSTR that will receive the icon path.
+* @return HRESULT The result of the operation.
+*/
     IFACEMETHODIMP GetIcon(_In_opt_ IShellItemArray* items, _Outptr_result_nullonfailure_ PWSTR* iconPath) {
         *iconPath = nullptr;
 
@@ -176,8 +224,7 @@ public:
 
             return E_FAIL;
         }
-
-
+		
         return S_OK;
     }
     CATCH_RETURN();
@@ -197,38 +244,3 @@ class __declspec(uuid("7A1E471F-0D43-4122-B1C4-D1AACE76CE9B")) WezTermCommand1 f
 };
 
 CoCreatableClass(WezTermCommand1)
-/**
- * @brief DllGetActivationFactory retrieves the activation factory for the specified class.
- *
- * This function is called to get the activation factory for the specified class identifier (CLSID).
- *
- * @param activatableClassId The class identifier.
- * @param factory Output parameter to receive the activation factory.
- * @return HRESULT indicating success (S_OK) or failure.
- */
-	STDAPI DllGetActivationFactory(_In_ HSTRING activatableClassId, _COM_Outptr_ IActivationFactory** factory) {
-	return Module<ModuleType::InProc>::GetModule().GetActivationFactory(activatableClassId, factory);
-}
-/**
- * @brief DllCanUnloadNow checks if the DLL can be unloaded from memory.
- *
- * This function is called to check whether the DLL can be safely unloaded from memory.
- *
- * @return S_OK if the DLL can be unloaded, S_FALSE otherwise.
- */
-STDAPI DllCanUnloadNow() {
-	return Module<InProc>::GetModule().GetObjectCount() == 0 ? S_OK : S_FALSE;
-}
-/**
- * @brief DllGetClassObject retrieves the class factory for the specified class.
- *
- * This function is called to get the class factory for the specified class identifier (CLSID).
- *
- * @param rclsid The class identifier.
- * @param riid The interface identifier.
- * @param instance Output parameter to receive the class factory instance.
- * @return HRESULT indicating success (S_OK) or failure.
- */
-STDAPI DllGetClassObject(_In_ REFCLSID rclsid, _In_ REFIID riid, _COM_Outptr_ void** instance) {
-	return Module<InProc>::GetModule().GetClassObject(rclsid, riid, instance);
-}
