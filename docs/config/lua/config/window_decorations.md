@@ -40,11 +40,15 @@ The value is a set of flags:
       if you are using the retro tab bar, [tab_bar_style](tab_bar_style.md).
 
 {{since('nightly', outline=true)}}
-    The following flag is also supported:
+    The following flags are also supported:
 
     * `MACOS_FORCE_SQUARE_CORNERS` - on macOS, force the window to have square
       rather than rounded corners. It is not compatible with `TITLE` or
       `INTEGRATED_BUTTONS`
+    * `MACOS_USE_BACKGROUND_COLOR_AS_TITLEBAR_COLOR` - on macOS, change the
+      system titlebar background color to match the terminal background color
+      defined by your configuration.  This option doesn't make sense to use
+      without also including `TITLE|RESIZE` in the set of decorations.
 
 On X11 and Wayland, the windowing system may override the window decorations.
 

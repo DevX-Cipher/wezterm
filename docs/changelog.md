@@ -103,6 +103,10 @@ As features stabilize some brief notes about them will accumulate here.
 * [launcher_alphabet](config/lua/config/launcher_alphabet.md) option for
   [ShowLauncherArgs](config/lua/keyassignment/ShowLauncherArgs.md).
   Thanks to @mgpinf! #6677
+* [window_decorations](config/lua/config/window_decorations.md) now supports
+  `MACOS_USE_BACKGROUND_COLOR_AS_TITLEBAR_COLOR` to match the macOS window
+  titlebar background color to the terminal background color defined by
+  your configuration. Thanks to @Jay-Madden! #6558
 
 #### Fixed
 * Race condition when very quickly adjusting font scale, and other improvements
@@ -197,6 +201,7 @@ As features stabilize some brief notes about them will accumulate here.
   @mgpinf! #6248 #5806 #5346
 * Deadlock when a domain detaches due to SSH timeout. Thanks to @joexue! #6749
   #6750
+* Panic when rewrapping very very long lines. #6729
 
 #### Updated
 * Bundled conpty.dll and OpenConsole.exe to build 1.22.250204002.nupkg

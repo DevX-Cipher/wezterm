@@ -24,10 +24,10 @@ use cocoa::appkit::{
 use cocoa::base::*;
 use cocoa::foundation::{
     NSArray, NSAutoreleasePool, NSFastEnumeration, NSInteger, NSNotFound, NSPoint, NSRect, NSSize,
-    NSUInteger,
+    NSString, NSUInteger,
 };
 use config::window::WindowLevel;
-use config::ConfigHandle;
+use config::{ConfigHandle, RgbaColor, SrgbaTuple};
 use core_foundation::base::{CFTypeID, TCFType};
 use core_foundation::bundle::{CFBundleGetBundleWithIdentifier, CFBundleGetFunctionPointerForName};
 use core_foundation::data::{CFData, CFDataGetBytePtr, CFDataRef};
@@ -37,6 +37,7 @@ use objc::declare::ClassDecl;
 use objc::rc::{StrongPtr, WeakPtr};
 use objc::runtime::{Class, Object, Protocol, Sel};
 use objc::*;
+use objc2_core_graphics::CGColorCreateSRGB;
 use promise::Future;
 use raw_window_handle::{
     AppKitDisplayHandle, AppKitWindowHandle, DisplayHandle, HandleError, HasDisplayHandle,
@@ -44,7 +45,7 @@ use raw_window_handle::{
 };
 use std::any::Any;
 use std::cell::RefCell;
-use std::ffi::c_void;
+use std::ffi::{c_void, CStr};
 use std::path::PathBuf;
 use std::ptr::NonNull;
 use std::rc::Rc;
@@ -1111,6 +1112,46 @@ impl WindowInner {
         }
     }
 
+    fn update_titlebar_background(&self) {
+        if !self
+            .config
+            .window_decorations
+            .contains(WindowDecorations::MACOS_USE_BACKGROUND_COLOR_AS_TITLEBAR_COLOR)
+        {
+            return;
+        }
+
+        // Set the titlebar background to the theme color falling back to black if there is no
+        // specified color scheme
+        let color = self
+            .config
+            .resolved_palette
+            .background
+            .unwrap_or(RgbaColor::from(SrgbaTuple(0., 0., 0., 255.)));
+
+        unsafe {
+            if let Some(titlebar_view_container) = get_titlebar_view_container(&self.window) {
+                let layer: id = msg_send![*titlebar_view_container.load(), layer];
+
+                if layer.is_null() {
+                    return;
+                }
+
+                // We need to make sure to convert the config color into an sRGB CGColor or the color will be slightly off
+                let srgb_cgcolor = CGColorCreateSRGB(
+                    color.0.into(),
+                    color.1.into(),
+                    color.2.into(),
+                    color.3.into(),
+                );
+
+                let _: () = msg_send![layer, setBackgroundColor: srgb_cgcolor];
+            } else {
+                log::trace!("failed to get titlebar view container from window");
+            }
+        }
+    }
+
     fn update_window_background_blur(&mut self) {
         unsafe {
             CGSSetWindowBackgroundBlurRadius(
@@ -1134,11 +1175,14 @@ impl WindowInner {
             // stuck with a scale factor of 2 despite us having configured 1.
             self.window
                 .setStyleMask_(NSWindowStyleMask::NSBorderlessWindowMask);
+
             apply_decorations_to_window(
                 &self.window,
                 self.config.window_decorations,
                 self.config.integrated_title_button_style,
             );
+
+            self.update_titlebar_background();
 
             self.window.makeKeyAndOrderFront_(nil)
         }
@@ -1308,6 +1352,7 @@ impl WindowInner {
         }
         self.update_window_shadow();
         self.update_window_background_blur();
+        self.update_titlebar_background();
         self.apply_decorations();
     }
 }
@@ -1355,7 +1400,10 @@ fn apply_decorations_to_window(
         } else {
             appkit::NSWindowTitleVisibility::NSWindowTitleHidden
         });
-        if decorations.contains(WindowDecorations::INTEGRATED_BUTTONS) {
+
+        if decorations.contains(WindowDecorations::INTEGRATED_BUTTONS)
+            || decorations.contains(WindowDecorations::MACOS_USE_BACKGROUND_COLOR_AS_TITLEBAR_COLOR)
+        {
             window.setTitlebarAppearsTransparent_(YES);
         } else {
             window.setTitlebarAppearsTransparent_(hidden);
@@ -1412,6 +1460,74 @@ fn decoration_to_mask(
             | NSWindowStyleMask::NSMiniaturizableWindowMask
             | NSWindowStyleMask::NSResizableWindowMask
     }
+}
+
+unsafe fn get_view_class_name(id: id) -> Option<String> {
+    if id.is_null() {
+        return None;
+    }
+
+    let class_name: id = msg_send![id, className];
+
+    if class_name.is_null() {
+        return None;
+    }
+
+    let cstr = CStr::from_ptr(class_name.UTF8String()).to_str();
+
+    match cstr {
+        Ok(s) => Some(s.to_string()),
+        Err(_) => None,
+    }
+}
+
+fn get_titlebar_view_container(window: &StrongPtr) -> Option<WeakPtr> {
+    // The view container for the titlebar on macos is found next to the primary window view
+    // so we need to traverse up to the super view to find it
+    let super_view = get_view_superview(window)?;
+
+    let sub_views = get_view_subviews(&super_view.load())?;
+
+    let count = unsafe { sub_views.load().count() };
+
+    for i in 0..count {
+        let sub_view: id = unsafe { sub_views.load().objectAtIndex(i) };
+
+        if sub_view.is_null() {
+            continue;
+        }
+
+        let class_name = unsafe { get_view_class_name(sub_view)? };
+
+        if class_name == TITLEBAR_VIEW_NAME {
+            let titlebar_view = unsafe { WeakPtr::new(sub_view) };
+            return Some(titlebar_view);
+        }
+    }
+
+    None
+}
+
+fn get_view_superview(view: &StrongPtr) -> Option<WeakPtr> {
+    let super_view_id: id = unsafe { msg_send![view.contentView(), superview] };
+
+    if super_view_id.is_null() {
+        return None;
+    }
+
+    let super_view = unsafe { WeakPtr::new(super_view_id) };
+
+    Some(super_view)
+}
+
+fn get_view_subviews(view: &StrongPtr) -> Option<WeakPtr> {
+    let sub_views_id: id = unsafe { msg_send![**view, subviews] };
+    if sub_views_id.is_null() {
+        return None;
+    }
+
+    let sub_views = unsafe { WeakPtr::new(sub_views_id) };
+    Some(sub_views)
 }
 
 #[derive(Debug)]
@@ -1707,6 +1823,7 @@ impl Inner {
 
 const VIEW_CLS_NAME: &str = "WezTermWindowView";
 const WINDOW_CLS_NAME: &str = "WezTermWindow";
+const TITLEBAR_VIEW_NAME: &str = "NSTitlebarContainerView";
 
 struct WindowView {
     inner: Rc<RefCell<Inner>>,
