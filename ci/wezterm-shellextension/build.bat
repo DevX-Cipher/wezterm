@@ -54,13 +54,6 @@ if not exist "%TARGET_DIR%" (
     mkdir "%TARGET_DIR%"
 )
 
-copy "%SOURCE_DIR%\*.dll" "%TARGET_DIR%"
-
-:: Check if the copy succeeded
-if %errorlevel% neq 0 (
-    echo Copy failed.
-    exit /b %errorlevel%
-)
 
 echo Build and copy succeeded.
 
@@ -68,6 +61,48 @@ echo Build and copy succeeded.
 set PROJECT_DIR=
 set SOURCE_DIR=
 set TARGET_DIR=
+
+
+REM Remember the current directory
+pushd .
+
+REM Print the current directory before changing directories
+echo Current directory: %CD%
+
+REM Go back two directories from the current folder
+cd ..\..
+
+REM Print the current directory after changing directories
+echo Changed to directory: %CD%
+
+REM Define the source and destination relative to the root folder
+set ROOT_DIR=%CD%
+set SOURCE="%ROOT_DIR%\assets\icon\terminal.png"
+set DEST="%ROOT_DIR%\ci\wezterm-shellextension\WezTerm\Assets"
+
+REM Print the source and destination
+echo Source: %SOURCE%
+echo Destination: %DEST%
+
+REM Check if the source file exists
+if not exist %SOURCE% (
+    echo Source file does not exist: %SOURCE%
+    popd
+    pause
+    exit /b 1
+)
+
+REM Create the destination directory if it doesn't exist
+if not exist %DEST% (
+    mkdir %DEST%
+)
+
+REM Copy the file from the source to the destination directory
+copy %SOURCE% %DEST%
+
+REM Optionally, display a message
+echo File copied successfully to %DEST%
+
 
 echo Creating self-signed certificate...
 powershell -Command "New-SelfSignedCertificate -Type Custom -Subject 'CN=WezTerm' -KeyUsage DigitalSignature -FriendlyName 'SelfSignCert' -CertStoreLocation 'Cert:\CurrentUser\My' -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')"

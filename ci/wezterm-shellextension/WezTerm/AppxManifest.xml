@@ -31,7 +31,7 @@
   </Resources>
 
   <Applications>
-    <Application Id="App" Executable="WezTerm\wezterm-gui.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="App" Executable="wezterm-gui.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements DisplayName="WezTerm" Description="WezTerm" BackgroundColor="transparent" 
                           Square150x150Logo="Images\Square150x150Logo.png" Square44x44Logo="Images\Square44x44Logo.png">
         <uap:DefaultTile/>
@@ -58,7 +58,7 @@
         <com:Extension Category="windows.comServer">
           <com:ComServer>
             <com:SurrogateServer DisplayName="Open WezTerm here">
-              <com:Class Id="7A1E471F-0D43-4122-B1C4-D1AACE76CE9B" Path="WezTerm\WezTermShellExtension.dll" ThreadingModel="STA"/>
+              <com:Class Id="7A1E471F-0D43-4122-B1C4-D1AACE76CE9B" Path="WezTermShellExtension.dll" ThreadingModel="STA"/>
             </com:SurrogateServer>
           </com:ComServer>
         </com:Extension>
