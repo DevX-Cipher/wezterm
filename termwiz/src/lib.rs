@@ -43,6 +43,7 @@
 mod emoji;
 mod emoji_presentation;
 mod emoji_variation;
+mod white_space;
 mod widechar_width;
 
 pub mod caps;

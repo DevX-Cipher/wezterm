@@ -61,6 +61,9 @@ As features stabilize some brief notes about them will accumulate here.
 * Preliminary support for ConEmu style progress escape sequences. See
   [pane:get_progress()](config/lua/pane/get_progress.md) for more information.
   #6581
+* [InputSelector](config/lua/keyassignment/InputSelector.md) now allows
+  setting `input_selector_label_bg` and `input_selector_label_fg` colors in
+  the `colors` section of your configuration.  Thanks to @mgpinf! #6682
 
 #### New
 * [wezterm.serde](config/lua/wezterm.serde/index.md) module for serialization

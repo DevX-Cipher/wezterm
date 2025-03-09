@@ -10,7 +10,9 @@ use ordered_float::NotNan;
 use std::fmt::Write;
 use std::io::Write as _;
 use std::ops::{Deref, DerefMut};
-use termwiz::cell::{grapheme_column_width, Cell, CellAttributes, SemanticType};
+use termwiz::cell::{
+    grapheme_column_width, is_white_space_grapheme, Cell, CellAttributes, SemanticType,
+};
 use termwiz::escape::csi::{
     CharacterPath, EraseInDisplay, Keyboard, KittyKeyboardFlags, KittyKeyboardMode,
 };
@@ -132,14 +134,31 @@ impl<'a> Performer<'a> {
         for g in Graphemes::new(text) {
             let g = self.remap_grapheme(g);
 
-            let print_width = grapheme_column_width(g, Some(self.unicode_version));
+            let mut print_width = grapheme_column_width(g, Some(self.unicode_version));
             if print_width == 0 {
                 // We got a zero-width grapheme.
-                // We used to force them into a cell to guarantee that we
-                // preserved them in the model, but it introduces presentation
-                // problems, such as <https://github.com/wezterm/wezterm/issues/1422>
-                log::trace!("Eliding zero-width grapheme {:?}", g);
-                continue;
+
+                // Relevant reading:
+                // <https://github.com/wezterm/wezterm/issues/1422>
+                // <https://github.com/wezterm/wezterm/issues/6637>
+                // <https://github.com/harfbuzz/harfbuzz/issues/4279>
+                // <https://www.unicode.org/faq/unsup_char.html#2>
+                //
+                // For White_Space we want to ensure that we display as a space.
+                // Other non-printing, zero-width characters can be elided
+                // to avoid presentation problems, but may introduce potential
+                // weirdness elsewhere. For example, U+2068 is a BIDI control
+                // character and will be elided by this logic. A consequence
+                // of that is that when the user copies the surrounding text
+                // from the terminal, that BIDI control will not be present.
+                // We do not currently have a solution for that.
+                if is_white_space_grapheme(g) {
+                    // Ensure that White_Space shows as a space
+                    print_width = 1;
+                } else {
+                    log::trace!("Eliding zero-width grapheme {:?}", g);
+                    continue;
+                }
             }
 
             if self.wrap_next {

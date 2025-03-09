@@ -927,6 +927,22 @@ pub const LATEST_UNICODE_VERSION: UnicodeVersion = UnicodeVersion {
     ambiguous_are_wide: false,
 };
 
+/// Returns true if the char `c` has the unicode White_Space property
+pub fn is_white_space_char(c: char) -> bool {
+    crate::white_space::WHITE_SPACE.contains_u32(c as u32)
+}
+
+/// Returns true if the grapheme string `g` consists entirely of characters
+/// that have the unicode White_Space property.
+pub fn is_white_space_grapheme(g: &str) -> bool {
+    for c in g.chars() {
+        if !is_white_space_char(c) {
+            return false;
+        }
+    }
+    true
+}
+
 /// Returns the number of cells visually occupied by a sequence
 /// of graphemes.
 /// Calls through to `grapheme_column_width` for each grapheme
@@ -1227,5 +1243,33 @@ mod test {
         let sequence2 = std::str::from_utf8(b"\xe1\x84\x92\xe1\x85\xa1\xe1\x86\xab").unwrap();
         assert_eq!(unicode_column_width(sequence2, None), 2);
         assert_eq!(grapheme_column_width(sequence2, None), 2);
+    }
+
+    // See <https://github.com/wezterm/wezterm/issues/6637>
+    // We're not directly "fixing" that issue here in termwiz at this time
+    // because it isn't clear that this cell module has enough context
+    // to eg: decide that the width of U+2028 should be returned as 1.
+    // That decision is made over in wezterm-term when processing
+    // a sequence of graphemes. This test case is just making assertions
+    // about the properties of a couple of problematic zero-width
+    // characters.
+    #[test]
+    fn issue_6637() {
+        // U+2028 is the unicode line separator. It is Non-printing White_Space.
+        let sequence = "\u{2028}";
+        // It has zero width
+        assert_eq!(unicode_column_width(sequence, None), 0);
+        assert_eq!(grapheme_column_width(sequence, None), 0);
+        // it is white space
+        assert!(is_white_space_grapheme(sequence));
+
+        // Just a couple of sanity checks for the white space function
+        assert!(is_white_space_char(' '));
+        assert!(!is_white_space_char('x'));
+
+        // U+2068 is a BIDI control character and is relevant here
+        // due to <https://github.com/wezterm/wezterm/issues/1422>.
+        // It is Non-Printing, non-White_Space
+        assert!(!is_white_space_char('\u{2068}'));
     }
 }
