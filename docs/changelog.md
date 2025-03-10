@@ -110,6 +110,10 @@ As features stabilize some brief notes about them will accumulate here.
   `MACOS_USE_BACKGROUND_COLOR_AS_TITLEBAR_COLOR` to match the macOS window
   titlebar background color to the terminal background color defined by
   your configuration. Thanks to @Jay-Madden! #6558
+* [char_select_font](config/lua/config/char_select_font.md),
+  [command_palette_font](config/lua/config/command_palette_font.md), and
+  [pane_select_font](config/lua/config/pane_select_font.md) options to control
+  the fonts for those respective overlays/modals.  Thanks to @mgpinf! #6696
 
 #### Fixed
 * Race condition when very quickly adjusting font scale, and other improvements
