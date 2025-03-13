@@ -28,7 +28,6 @@ Additionally, ensure that you have **Visual Studio Build Tools for C++** install
    └── WzTerm
        └── WezTerm
            ├── wezterm.exe
-           ├── wezterm_config.lua
            ├── (other WezTerm files)
    ```
 
