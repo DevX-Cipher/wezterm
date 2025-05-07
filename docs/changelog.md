@@ -114,6 +114,14 @@ As features stabilize some brief notes about them will accumulate here.
   [command_palette_font](config/lua/config/command_palette_font.md), and
   [pane_select_font](config/lua/config/pane_select_font.md) options to control
   the fonts for those respective overlays/modals.  Thanks to @mgpinf! #6696
+* Git branch and progress bar symbols have been added to
+  [custom_block_glyphs](config/lua/config/custom_block_glyphs.md). Thanks to
+  @BenBergman! #6328 #6873 #6875
+* [cell_widths](config/lua/config/cell_widths.md) option for explicit
+  control over cell widths. Thanks to @hamano! #6289 #6290
+* [kde_window_background_blur](config/lua/config/kde_window_background_blur.md) option
+  to enable window blur when running under KDE Plasma on Wayland systems.
+  Thanks to @psomani16k! #6905
 
 #### Fixed
 * Race condition when very quickly adjusting font scale, and other improvements
@@ -209,6 +217,14 @@ As features stabilize some brief notes about them will accumulate here.
 * Deadlock when a domain detaches due to SSH timeout. Thanks to @joexue! #6749
   #6750
 * Panic when rewrapping very very long lines. #6729
+* CUP position parameters were mandatory when they should have been optional.
+  Thanks to @wojciech-graj! #6860
+* Long CSI sequences were not parsed correctly. Thanks to @jdugan6240! #5161
+  #6194
+* IBus IME working unreliably. Thanks to @pjm0616! #5125
+* Pixel aliasing issue when using
+  [window_content_alignment](config/lua/config/window_content_alignment.md) =
+  `Center`. Thanks to @juster-0! #6929 #6928 #6823
 
 #### Updated
 * Bundled conpty.dll and OpenConsole.exe to build 1.22.250204002.nupkg

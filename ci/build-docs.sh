@@ -50,10 +50,22 @@ cp "assets/icon/wezterm-icon.svg" docs/favicon.svg
 mkdir -p docs/fonts
 cp assets/fonts/SymbolsNerdFontMono-Regular.ttf docs/fonts/
 
-docker build -t wezterm/mkdocs-material -f ci/Dockerfile.docs .
+docker_or_podman() {
+  if hash podman 2>/dev/null ; then
+    podman "$@"
+  elif hash docker 2>/dev/null ; then
+    docker "$@"
+  else
+    echo "Please install either podman or docker"
+    exit 1
+  fi
+}
+
+docker_or_podman build -t wezterm/mkdocs-material -f ci/Dockerfile.docs .
 
 if [ "$SERVE" == "yes" ] ; then
-  docker run --rm -it --network=host -v ${PWD}:/docs wezterm/mkdocs-material serve
+  docker_or_podman run --rm -it -p8000:8000 -v ${PWD}:/docs wezterm/mkdocs-material serve -a 0.0.0.0:8000
+  #docker_or_podman run --rm -it --network=host -v ${PWD}:/docs wezterm/mkdocs-material $@
 else
-  docker run --rm -e CARDS=true -v ${PWD}:/docs wezterm/mkdocs-material build
+  docker_or_podman run --rm -e CARDS=true -v ${PWD}:/docs wezterm/mkdocs-material build
 fi
