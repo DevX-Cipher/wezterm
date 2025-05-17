@@ -520,6 +520,15 @@ impl crate::TermWindow {
         Ok(())
     }
 
+    fn ensure_min_contrast(&self, fg_color: LinearRgba, bg_color: LinearRgba) -> LinearRgba {
+        match self.config.text_min_contrast_ratio {
+            Some(ratio) => fg_color
+                .ensure_contrast_ratio(&bg_color, ratio)
+                .unwrap_or(fg_color),
+            None => fg_color,
+        }
+    }
+
     pub fn compute_cell_fg_bg(&self, params: ComputeCellFgBgParams) -> ComputeCellFgBgResult {
         if params.cursor.is_some() {
             if let Some(bg_color_mix) = self.get_intensity_if_bell_target_ringing(
@@ -527,12 +536,13 @@ impl crate::TermWindow {
                 params.config,
                 VisualBellTarget::CursorColor,
             ) {
-                let (fg_color, bg_color) =
-                    if self.config.force_reverse_video_cursor && params.cursor_is_default_color {
-                        (params.bg_color, params.fg_color)
-                    } else {
-                        (params.cursor_fg, params.cursor_bg)
-                    };
+                let (fg_color, bg_color) = if self.use_reverse_video_cursor(&params) {
+                    (params.bg_color, params.fg_color)
+                } else {
+                    (params.cursor_fg, params.cursor_bg)
+                };
+
+                let fg_color = self.ensure_min_contrast(fg_color, bg_color);
 
                 // interpolate between the background color
                 // and the the target color
@@ -561,12 +571,13 @@ impl crate::TermWindow {
                 self.dead_key_status != DeadKeyStatus::None || self.leader_is_active();
 
             if dead_key_or_leader && params.is_active_pane {
-                let (fg_color, bg_color) =
-                    if self.config.force_reverse_video_cursor && params.cursor_is_default_color {
-                        (params.bg_color, params.fg_color)
-                    } else {
-                        (params.cursor_fg, params.cursor_bg)
-                    };
+                let (fg_color, bg_color) = if self.use_reverse_video_cursor(&params) {
+                    (params.bg_color, params.fg_color)
+                } else {
+                    (params.cursor_fg, params.cursor_bg)
+                };
+
+                let fg_color = self.ensure_min_contrast(fg_color, bg_color);
 
                 let color = params
                     .config
@@ -622,7 +633,7 @@ impl crate::TermWindow {
                 CursorShape::BlinkingBlock | CursorShape::SteadyBlock,
                 CursorVisibility::Visible,
             ) => {
-                if self.config.force_reverse_video_cursor && params.cursor_is_default_color {
+                if self.use_reverse_video_cursor(&params) {
                     (params.bg_color, params.fg_color, params.fg_color)
                 } else {
                     (
@@ -641,7 +652,7 @@ impl crate::TermWindow {
                 | CursorShape::SteadyBar,
                 CursorVisibility::Visible,
             ) => {
-                if self.config.force_reverse_video_cursor && params.cursor_is_default_color {
+                if self.use_reverse_video_cursor(&params) {
                     (params.fg_color, params.bg_color, params.fg_color)
                 } else {
                     (params.fg_color, params.bg_color, params.cursor_bg)
@@ -650,6 +661,8 @@ impl crate::TermWindow {
             // Normally, render the cell as configured (or if the window is unfocused)
             _ => (params.fg_color, params.bg_color, params.cursor_border_color),
         };
+
+        let fg_color = self.ensure_min_contrast(fg_color, bg_color);
 
         let blinking = params.cursor.is_some()
             && params.is_active_pane
@@ -707,6 +720,13 @@ impl crate::TermWindow {
                 None
             },
         }
+    }
+
+    fn use_reverse_video_cursor(&self, params: &ComputeCellFgBgParams) -> bool {
+        self.config.force_reverse_video_cursor
+            && params.cursor_is_default_color
+            && params.fg_color.contrast_ratio(&params.bg_color)
+                >= self.config.reverse_video_cursor_min_contrast
     }
 
     fn glyph_infos_to_glyphs(

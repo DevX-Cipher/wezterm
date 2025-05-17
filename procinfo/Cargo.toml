@@ -13,7 +13,7 @@ lua = ["dep:luahelper", "dep:wezterm-dynamic"]
 libc.workspace = true
 log.workspace = true
 luahelper = { workspace=true, optional = true }
-wezterm-dynamic = { workspace=true, optional = true }
+wezterm-dynamic = { workspace=true, optional = true, features=["std"]}
 
 [target."cfg(windows)".dependencies]
 ntapi.workspace = true

@@ -12,7 +12,6 @@ readme = "README.md"
 
 [dependencies]
 anyhow.workspace = true
-base64.workspace = true
 bitflags = "2.0"
 cassowary = {workspace=true, optional=true}
 fancy-regex.workspace = true
@@ -20,14 +19,13 @@ filedescriptor.workspace = true
 finl_unicode.workspace = true
 fixedbitset.workspace = true
 fnv = {workspace=true, optional=true}
-hex.workspace = true
 image = {workspace=true, optional=true}
 libc.workspace = true
 log.workspace = true
 memmem.workspace = true
 num-derive.workspace = true
 num-traits.workspace = true
-ordered-float.workspace = true
+ordered-float = {workspace = true, features=["std"]}
 pest = {workspace=true, optional=true}
 pest_derive = {workspace=true, optional=true}
 phf.workspace = true
@@ -41,25 +39,27 @@ unicode-segmentation.workspace = true
 vtparse.workspace = true
 wezterm-bidi.workspace = true
 wezterm-blob-leases = {workspace=true, optional=true}
-wezterm-color-types.workspace = true
-wezterm-dynamic.workspace = true
+wezterm-cell = {workspace = true, features=["std"]}
+wezterm-char-props.workspace = true
+wezterm-color-types = {workspace = true, features=["std"]}
+wezterm-dynamic = {workspace = true, features=["std"]}
+wezterm-escape-parser = {workspace = true, features=["std"]}
 wezterm-input-types.workspace = true
+wezterm-surface = {workspace = true, features=["std", "appdata"]}
 
 [features]
 default = ["image", "tmux_cc"]
 widgets = ["cassowary", "fnv"]
-use_serde = ["serde", "wezterm-color-types/use_serde", "wezterm-blob-leases/serde", "bitflags/serde", "wezterm-input-types/serde"]
-use_image = ["image", "dep:image"]
-image = ["sha2", "wezterm-blob-leases"]
-tmux_cc = ["pest", "pest_derive"]
+use_serde = ["serde", "wezterm-color-types/use_serde", "wezterm-blob-leases/serde", "bitflags/serde", "wezterm-input-types/serde", "wezterm-escape-parser/use_serde", "wezterm-cell/use_serde", "wezterm-surface/use_serde"]
+use_image = ["image", "dep:image", "wezterm-escape-parser/use_image", "wezterm-escape-parser/kitty-shm", "wezterm-cell/use_image", "wezterm-surface/use_image"]
+image = ["sha2", "wezterm-blob-leases", "wezterm-escape-parser/image"]
+tmux_cc = ["pest", "pest_derive", "wezterm-escape-parser/tmux_cc"]
 docs = ["widgets", "use_serde", "image", "tmux_cc"]
 
 [dev-dependencies]
 criterion.workspace = true
 env_logger.workspace = true
 k9.workspace = true
-varbincode.workspace = true
-
 
 [target."cfg(unix)".dependencies]
 signal-hook.workspace = true
@@ -85,10 +85,6 @@ workspace = true
 [package.metadata.docs.rs]
 features = ["docs"]
 rustdoc-args = ["--cfg", "feature=\"docs\""]
-
-[[bench]]
-name = "wcwidth"
-harness = false
 
 [[bench]]
 name = "cell"

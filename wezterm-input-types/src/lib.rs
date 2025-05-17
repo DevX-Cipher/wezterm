@@ -1,12 +1,24 @@
-use bitflags::*;
+#![cfg_attr(not(feature = "std"), no_std)]
+
 #[cfg(feature = "serde")]
-use serde::*;
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::fmt::Write;
-use std::sync::atomic::AtomicBool;
-use std::sync::{Arc, LazyLock};
+use ::serde::*;
+use alloc::sync::Arc;
+use bitflags::*;
+use core::convert::TryFrom;
+use core::fmt::Write;
+use core::sync::atomic::AtomicBool;
+#[cfg(feature = "std")]
+use std::sync::LazyLock;
 use wezterm_dynamic::{FromDynamic, ToDynamic};
+
+extern crate alloc;
+
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use alloc::{format, vec};
+
+#[cfg(feature = "std")]
+use std::collections::HashMap;
 
 pub struct PixelUnit;
 pub struct ScreenPixelUnit;
@@ -317,12 +329,12 @@ impl KeyCode {
 
 impl TryFrom<&str> for KeyCode {
     type Error = String;
-    fn try_from(s: &str) -> std::result::Result<Self, String> {
+    fn try_from(s: &str) -> core::result::Result<Self, String> {
         macro_rules! m {
             ($($val:ident),* $(,)?) => {
                 match s {
                 $(
-                    stringify!($val) => return Ok(Self::$val),
+                    core::stringify!($val) => return Ok(Self::$val),
                 )*
                     _ => {}
                 }
@@ -994,17 +1006,19 @@ impl PhysKeyCode {
         }
     }
 
-    fn make_map() -> HashMap<String, Self> {
-        let mut map = HashMap::new();
-
+    fn for_each_code(mut func: impl FnMut(&str, Self) -> bool) {
         macro_rules! m {
             ($($val:ident),* $(,)?) => {
                 $(
-                    let key = stringify!($val).to_string();
+                    let key = stringify!($val);
                     if key.len() == 1 {
-                        map.insert(key.to_ascii_lowercase(), PhysKeyCode::$val);
+                        if (func)(&key.to_ascii_lowercase(), PhysKeyCode::$val) {
+                            return;
+                        }
                     }
-                    map.insert(key, PhysKeyCode::$val);
+                    if (func)(key, PhysKeyCode::$val) {
+                        return;
+                    }
                 )*
             }
         }
@@ -1118,20 +1132,37 @@ impl PhysKeyCode {
             Z,
         );
 
-        map.insert("0".to_string(), PhysKeyCode::K0);
-        map.insert("1".to_string(), PhysKeyCode::K1);
-        map.insert("2".to_string(), PhysKeyCode::K2);
-        map.insert("3".to_string(), PhysKeyCode::K3);
-        map.insert("4".to_string(), PhysKeyCode::K4);
-        map.insert("5".to_string(), PhysKeyCode::K5);
-        map.insert("6".to_string(), PhysKeyCode::K6);
-        map.insert("7".to_string(), PhysKeyCode::K7);
-        map.insert("8".to_string(), PhysKeyCode::K8);
-        map.insert("9".to_string(), PhysKeyCode::K9);
+        for (label, value) in [
+            ("0", PhysKeyCode::K0),
+            ("1", PhysKeyCode::K1),
+            ("2", PhysKeyCode::K2),
+            ("3", PhysKeyCode::K3),
+            ("4", PhysKeyCode::K4),
+            ("5", PhysKeyCode::K5),
+            ("6", PhysKeyCode::K6),
+            ("7", PhysKeyCode::K7),
+            ("8", PhysKeyCode::K8),
+            ("9", PhysKeyCode::K9),
+        ] {
+            if (func)(label, value) {
+                return;
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    fn make_map() -> HashMap<String, Self> {
+        let mut map = HashMap::new();
+
+        Self::for_each_code(|label, code| {
+            map.insert(label.to_string(), code);
+            false
+        });
 
         map
     }
 
+    #[cfg(feature = "std")]
     fn make_inv_map() -> HashMap<Self, String> {
         let mut map = HashMap::new();
         for (k, v) in PHYSKEYCODE_MAP.iter() {
@@ -1139,18 +1170,60 @@ impl PhysKeyCode {
         }
         map
     }
+
+    fn name_to_code(name: &str) -> Option<Self> {
+        #[cfg(feature = "std")]
+        {
+            return PHYSKEYCODE_MAP.get(name).copied();
+        }
+        #[cfg(not(feature = "std"))]
+        {
+            let mut result = None;
+            Self::for_each_code(|label, code| {
+                if label == name {
+                    result.replace(code);
+                    true
+                } else {
+                    false
+                }
+            });
+            result
+        }
+    }
+
+    fn to_name(&self) -> Option<String> {
+        #[cfg(feature = "std")]
+        {
+            return INV_PHYSKEYCODE_MAP.get(self).cloned();
+        }
+        #[cfg(not(feature = "std"))]
+        {
+            let mut result = None;
+            Self::for_each_code(|label, code| {
+                if code == *self {
+                    result.replace(label.to_string());
+                    true
+                } else {
+                    false
+                }
+            });
+            result
+        }
+    }
 }
 
+#[cfg(feature = "std")]
 static PHYSKEYCODE_MAP: LazyLock<HashMap<String, PhysKeyCode>> =
     LazyLock::new(PhysKeyCode::make_map);
+#[cfg(feature = "std")]
 static INV_PHYSKEYCODE_MAP: LazyLock<HashMap<PhysKeyCode, String>> =
     LazyLock::new(PhysKeyCode::make_inv_map);
 
 impl TryFrom<&str> for PhysKeyCode {
     type Error = String;
-    fn try_from(s: &str) -> std::result::Result<PhysKeyCode, String> {
-        if let Some(code) = PHYSKEYCODE_MAP.get(s) {
-            Ok(*code)
+    fn try_from(s: &str) -> core::result::Result<PhysKeyCode, String> {
+        if let Some(code) = Self::name_to_code(s) {
+            Ok(code)
         } else {
             Err(format!("invalid PhysKeyCode '{}'", s))
         }
@@ -1159,7 +1232,7 @@ impl TryFrom<&str> for PhysKeyCode {
 
 impl ToString for PhysKeyCode {
     fn to_string(&self) -> String {
-        if let Some(s) = INV_PHYSKEYCODE_MAP.get(self) {
+        if let Some(s) = self.to_name() {
             s.to_string()
         } else {
             format!("{:?}", self)
@@ -1216,11 +1289,11 @@ impl Handled {
     }
 
     pub fn set_handled(&self) {
-        self.0.store(true, std::sync::atomic::Ordering::Relaxed);
+        self.0.store(true, core::sync::atomic::Ordering::Relaxed);
     }
 
     pub fn is_handled(&self) -> bool {
-        self.0.load(std::sync::atomic::Ordering::Relaxed)
+        self.0.load(core::sync::atomic::Ordering::Relaxed)
     }
 }
 
@@ -2013,7 +2086,7 @@ impl Into<String> for &WindowDecorations {
 
 impl TryFrom<String> for WindowDecorations {
     type Error = String;
-    fn try_from(s: String) -> std::result::Result<WindowDecorations, String> {
+    fn try_from(s: String) -> core::result::Result<WindowDecorations, String> {
         let mut flags = Self::NONE;
         for ele in s.split('|') {
             let ele = ele.trim();

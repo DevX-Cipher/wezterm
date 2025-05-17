@@ -397,10 +397,19 @@ pub struct VTParser {
 /// and I are intermediate bytes in the range 0x20-0x2F
 /// and F is the final byte in the range 0x40-0x7E
 ///
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum CsiParam {
     Integer(i64),
     P(u8),
+}
+
+impl core::fmt::Debug for CsiParam {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            Self::Integer(i) => write!(fmt, "Integer({i})"),
+            Self::P(n) => write!(fmt, "P({})", char::from(*n)),
+        }
+    }
 }
 
 impl Default for CsiParam {

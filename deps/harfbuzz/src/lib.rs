@@ -353,6 +353,19 @@ pub struct hb_glyph_extents_t {
 pub struct hb_font_t {
     _unused: [u8; 0],
 }
+unsafe extern "C" {
+    pub fn hb_malloc(size: usize) -> *mut ::std::os::raw::c_void;
+}
+unsafe extern "C" {
+    pub fn hb_calloc(nmemb: usize, size: usize) -> *mut ::std::os::raw::c_void;
+}
+unsafe extern "C" {
+    pub fn hb_realloc(ptr: *mut ::std::os::raw::c_void, size: usize)
+        -> *mut ::std::os::raw::c_void;
+}
+unsafe extern "C" {
+    pub fn hb_free(ptr: *mut ::std::os::raw::c_void);
+}
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum hb_memory_mode_t {
@@ -953,10 +966,27 @@ unsafe extern "C" {
     ) -> *mut hb_face_t;
 }
 unsafe extern "C" {
+    pub fn hb_face_create_or_fail_using(
+        blob: *mut hb_blob_t,
+        index: ::std::os::raw::c_uint,
+        loader_name: *const ::std::os::raw::c_char,
+    ) -> *mut hb_face_t;
+}
+unsafe extern "C" {
     pub fn hb_face_create_from_file_or_fail(
         file_name: *const ::std::os::raw::c_char,
         index: ::std::os::raw::c_uint,
     ) -> *mut hb_face_t;
+}
+unsafe extern "C" {
+    pub fn hb_face_create_from_file_or_fail_using(
+        file_name: *const ::std::os::raw::c_char,
+        index: ::std::os::raw::c_uint,
+        loader_name: *const ::std::os::raw::c_char,
+    ) -> *mut hb_face_t;
+}
+unsafe extern "C" {
+    pub fn hb_face_list_loaders() -> *mut *const ::std::os::raw::c_char;
 }
 pub type hb_reference_table_func_t = ::std::option::Option<
     unsafe extern "C" fn(
@@ -1000,7 +1030,7 @@ unsafe extern "C" {
     pub fn hb_face_make_immutable(face: *mut hb_face_t);
 }
 unsafe extern "C" {
-    pub fn hb_face_is_immutable(face: *const hb_face_t) -> hb_bool_t;
+    pub fn hb_face_is_immutable(face: *mut hb_face_t) -> hb_bool_t;
 }
 unsafe extern "C" {
     pub fn hb_face_reference_table(face: *const hb_face_t, tag: hb_tag_t) -> *mut hb_blob_t;
@@ -1677,6 +1707,20 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
+    pub fn hb_paint_push_font_transform(
+        funcs: *mut hb_paint_funcs_t,
+        paint_data: *mut ::std::os::raw::c_void,
+        font: *const hb_font_t,
+    );
+}
+unsafe extern "C" {
+    pub fn hb_paint_push_inverse_font_transform(
+        funcs: *mut hb_paint_funcs_t,
+        paint_data: *mut ::std::os::raw::c_void,
+        font: *const hb_font_t,
+    );
+}
+unsafe extern "C" {
     pub fn hb_paint_pop_transform(
         funcs: *mut hb_paint_funcs_t,
         paint_data: *mut ::std::os::raw::c_void,
@@ -1970,7 +2014,7 @@ pub type hb_font_get_glyph_from_name_func_t = ::std::option::Option<
         user_data: *mut ::std::os::raw::c_void,
     ) -> hb_bool_t,
 >;
-pub type hb_font_draw_glyph_func_t = ::std::option::Option<
+pub type hb_font_draw_glyph_or_fail_func_t = ::std::option::Option<
     unsafe extern "C" fn(
         font: *mut hb_font_t,
         font_data: *mut ::std::os::raw::c_void,
@@ -1978,9 +2022,9 @@ pub type hb_font_draw_glyph_func_t = ::std::option::Option<
         draw_funcs: *mut hb_draw_funcs_t,
         draw_data: *mut ::std::os::raw::c_void,
         user_data: *mut ::std::os::raw::c_void,
-    ),
+    ) -> hb_bool_t,
 >;
-pub type hb_font_paint_glyph_func_t = ::std::option::Option<
+pub type hb_font_paint_glyph_or_fail_func_t = ::std::option::Option<
     unsafe extern "C" fn(
         font: *mut hb_font_t,
         font_data: *mut ::std::os::raw::c_void,
@@ -1990,7 +2034,7 @@ pub type hb_font_paint_glyph_func_t = ::std::option::Option<
         palette_index: ::std::os::raw::c_uint,
         foreground: hb_color_t,
         user_data: *mut ::std::os::raw::c_void,
-    ),
+    ) -> hb_bool_t,
 >;
 unsafe extern "C" {
     pub fn hb_font_funcs_set_font_h_extents_func(
@@ -2121,17 +2165,17 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
-    pub fn hb_font_funcs_set_draw_glyph_func(
+    pub fn hb_font_funcs_set_draw_glyph_or_fail_func(
         ffuncs: *mut hb_font_funcs_t,
-        func: hb_font_draw_glyph_func_t,
+        func: hb_font_draw_glyph_or_fail_func_t,
         user_data: *mut ::std::os::raw::c_void,
         destroy: hb_destroy_func_t,
     );
 }
 unsafe extern "C" {
-    pub fn hb_font_funcs_set_paint_glyph_func(
+    pub fn hb_font_funcs_set_paint_glyph_or_fail_func(
         ffuncs: *mut hb_font_funcs_t,
-        func: hb_font_paint_glyph_func_t,
+        func: hb_font_paint_glyph_or_fail_func_t,
         user_data: *mut ::std::os::raw::c_void,
         destroy: hb_destroy_func_t,
     );
@@ -2261,22 +2305,22 @@ unsafe extern "C" {
     ) -> hb_bool_t;
 }
 unsafe extern "C" {
-    pub fn hb_font_draw_glyph(
+    pub fn hb_font_draw_glyph_or_fail(
         font: *mut hb_font_t,
         glyph: hb_codepoint_t,
         dfuncs: *mut hb_draw_funcs_t,
         draw_data: *mut ::std::os::raw::c_void,
-    );
+    ) -> hb_bool_t;
 }
 unsafe extern "C" {
-    pub fn hb_font_paint_glyph(
+    pub fn hb_font_paint_glyph_or_fail(
         font: *mut hb_font_t,
         glyph: hb_codepoint_t,
         pfuncs: *mut hb_paint_funcs_t,
         paint_data: *mut ::std::os::raw::c_void,
         palette_index: ::std::os::raw::c_uint,
         foreground: hb_color_t,
-    );
+    ) -> hb_bool_t;
 }
 unsafe extern "C" {
     pub fn hb_font_get_glyph(
@@ -2385,6 +2429,24 @@ unsafe extern "C" {
     ) -> hb_bool_t;
 }
 unsafe extern "C" {
+    pub fn hb_font_draw_glyph(
+        font: *mut hb_font_t,
+        glyph: hb_codepoint_t,
+        dfuncs: *mut hb_draw_funcs_t,
+        draw_data: *mut ::std::os::raw::c_void,
+    );
+}
+unsafe extern "C" {
+    pub fn hb_font_paint_glyph(
+        font: *mut hb_font_t,
+        glyph: hb_codepoint_t,
+        pfuncs: *mut hb_paint_funcs_t,
+        paint_data: *mut ::std::os::raw::c_void,
+        palette_index: ::std::os::raw::c_uint,
+        foreground: hb_color_t,
+    );
+}
+unsafe extern "C" {
     pub fn hb_font_create(face: *mut hb_face_t) -> *mut hb_font_t;
 }
 unsafe extern "C" {
@@ -2454,6 +2516,15 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
+    pub fn hb_font_set_funcs_using(
+        font: *mut hb_font_t,
+        name: *const ::std::os::raw::c_char,
+    ) -> hb_bool_t;
+}
+unsafe extern "C" {
+    pub fn hb_font_list_funcs() -> *mut *const ::std::os::raw::c_char;
+}
+unsafe extern "C" {
     pub fn hb_font_set_scale(
         font: *mut hb_font_t,
         x_scale: ::std::os::raw::c_int,
@@ -2486,6 +2557,9 @@ unsafe extern "C" {
 }
 unsafe extern "C" {
     pub fn hb_font_get_ptem(font: *mut hb_font_t) -> f32;
+}
+unsafe extern "C" {
+    pub fn hb_font_is_synthetic(font: *mut hb_font_t) -> hb_bool_t;
 }
 unsafe extern "C" {
     pub fn hb_font_set_synthetic_bold(
@@ -2733,6 +2807,7 @@ pub enum hb_buffer_cluster_level_t {
     HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES = 0,
     HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS = 1,
     HB_BUFFER_CLUSTER_LEVEL_CHARACTERS = 2,
+    HB_BUFFER_CLUSTER_LEVEL_GRAPHEMES = 3,
 }
 unsafe extern "C" {
     pub fn hb_buffer_set_cluster_level(
@@ -3108,10 +3183,48 @@ pub type hb_font_get_glyph_shape_func_t = ::std::option::Option<
         user_data: *mut ::std::os::raw::c_void,
     ),
 >;
+pub type hb_font_draw_glyph_func_t = ::std::option::Option<
+    unsafe extern "C" fn(
+        font: *mut hb_font_t,
+        font_data: *mut ::std::os::raw::c_void,
+        glyph: hb_codepoint_t,
+        draw_funcs: *mut hb_draw_funcs_t,
+        draw_data: *mut ::std::os::raw::c_void,
+        user_data: *mut ::std::os::raw::c_void,
+    ),
+>;
+pub type hb_font_paint_glyph_func_t = ::std::option::Option<
+    unsafe extern "C" fn(
+        font: *mut hb_font_t,
+        font_data: *mut ::std::os::raw::c_void,
+        glyph: hb_codepoint_t,
+        paint_funcs: *mut hb_paint_funcs_t,
+        paint_data: *mut ::std::os::raw::c_void,
+        palette_index: ::std::os::raw::c_uint,
+        foreground: hb_color_t,
+        user_data: *mut ::std::os::raw::c_void,
+    ) -> hb_bool_t,
+>;
 unsafe extern "C" {
     pub fn hb_font_funcs_set_glyph_shape_func(
         ffuncs: *mut hb_font_funcs_t,
         func: hb_font_get_glyph_shape_func_t,
+        user_data: *mut ::std::os::raw::c_void,
+        destroy: hb_destroy_func_t,
+    );
+}
+unsafe extern "C" {
+    pub fn hb_font_funcs_set_draw_glyph_func(
+        ffuncs: *mut hb_font_funcs_t,
+        func: hb_font_draw_glyph_func_t,
+        user_data: *mut ::std::os::raw::c_void,
+        destroy: hb_destroy_func_t,
+    );
+}
+unsafe extern "C" {
+    pub fn hb_font_funcs_set_paint_glyph_func(
+        ffuncs: *mut hb_font_funcs_t,
+        func: hb_font_paint_glyph_func_t,
         user_data: *mut ::std::os::raw::c_void,
         destroy: hb_destroy_func_t,
     );
@@ -3600,6 +3713,12 @@ unsafe extern "C" {
 unsafe extern "C" {
     pub fn hb_ft_face_create_from_file_or_fail(
         file_name: *const ::std::os::raw::c_char,
+        index: ::std::os::raw::c_uint,
+    ) -> *mut hb_face_t;
+}
+unsafe extern "C" {
+    pub fn hb_ft_face_create_from_blob_or_fail(
+        blob: *mut hb_blob_t,
         index: ::std::os::raw::c_uint,
     ) -> *mut hb_face_t;
 }

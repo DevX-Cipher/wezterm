@@ -18,7 +18,7 @@ vendored-openssl-libssh-rs = ["libssh-rs/vendored-openssl"]
 
 [dependencies]
 anyhow.workspace = true
-base64.workspace = true
+base64 = {workspace = true, features=["std"]}
 bitflags.workspace = true
 camino.workspace = true
 dirs-next.workspace = true

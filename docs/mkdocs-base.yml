@@ -97,7 +97,7 @@ markdown_extensions:
   - pymdownx.saneheaders
   - pymdownx.magiclink:
       repo_url_shorthand: true
-      user: wez
+      user: wezterm
       repo: wezterm
   - pymdownx.details
   - attr_list

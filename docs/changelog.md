@@ -64,6 +64,9 @@ As features stabilize some brief notes about them will accumulate here.
 * [InputSelector](config/lua/keyassignment/InputSelector.md) now allows
   setting `input_selector_label_bg` and `input_selector_label_fg` colors in
   the `colors` section of your configuration.  Thanks to @mgpinf! #6682
+* `wezterm imgcat --hold` now avoids local echo and accepts pressing `Escape`,
+  `CTRL-C` and `CTRL-D` as various ways of exiting hold mode. Thanks to
+  @mgpinf! #6801
 
 #### New
 * [wezterm.serde](config/lua/wezterm.serde/index.md) module for serialization
@@ -122,6 +125,16 @@ As features stabilize some brief notes about them will accumulate here.
 * [kde_window_background_blur](config/lua/config/kde_window_background_blur.md) option
   to enable window blur when running under KDE Plasma on Wayland systems.
   Thanks to @psomani16k! #6905
+* [reverse_video_cursor_min_contrast](config/lua/config/reverse_video_cursor_min_contrast.md)
+  option. Thanks to @jameshurst! #6584 ?2861
+* [text_min_contrast_ratio](config/lua/config/text_min_contrast_ratio.md) to more generally
+  improve the contrast ratio for text in the terminal.
+* New `launcher_label_fg` and `launcher_label_bg` options for to customize
+  the [Launcher Menu](config/launch.md#the-launcher-menu). Thanks to @mgpinf!
+  #6796
+* [TabInformation](config/lua/TabInformation.md) now exposes `is_last_active` as
+  a boolean property to indicate whether a tab was the prior active tab.
+  Thanks to @masriomarm! #6895
 
 #### Fixed
 * Race condition when very quickly adjusting font scale, and other improvements
@@ -225,10 +238,13 @@ As features stabilize some brief notes about them will accumulate here.
 * Pixel aliasing issue when using
   [window_content_alignment](config/lua/config/window_content_alignment.md) =
   `Center`. Thanks to @juster-0! #6929 #6928 #6823
+* Passing a `SpawnCommand` to the `SwitchToWorkspace` assignment would ignore
+  `set_environment_variables`. Thanks to @vincentbesanceney! #6850 #6845
+* `libssh` based ssh sessions will now respect `ServerAliveInterval`. #4023
 
 #### Updated
 * Bundled conpty.dll and OpenConsole.exe to build 1.22.250204002.nupkg
-* Bundled harfbuzz to 10.4.0
+* Bundled harfbuzz to 11.2.1
 * Bundled libssh to 0.11.1
 * Bundled freetype to 2.13.3
 * Bundled Nerd Font Symbols font to v3.3.0

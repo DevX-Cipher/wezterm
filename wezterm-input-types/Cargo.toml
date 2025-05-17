@@ -16,4 +16,5 @@ serde = {workspace=true, features = ["rc", "derive"], optional=true}
 wezterm-dynamic.workspace = true
 
 [features]
-default = ["serde"]
+default = ["serde", "std"]
+std = ["serde/std", "euclid/std"]

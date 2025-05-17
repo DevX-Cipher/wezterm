@@ -751,6 +751,36 @@ mod test {
     use k9::snapshot;
 
     #[test]
+    fn parse_keepalive() {
+        let mut config = Config::new();
+        config.add_config_string(
+            r#"
+        Host foo
+            ServerAliveInterval 60
+            "#,
+        );
+        let mut fake_env = ConfigMap::new();
+        fake_env.insert("HOME".to_string(), "/home/me".to_string());
+        fake_env.insert("USER".to_string(), "me".to_string());
+        config.assign_environment(fake_env);
+
+        let opts = config.for_host("foo");
+        snapshot!(
+            opts,
+            r#"
+{
+    "hostname": "foo",
+    "identityfile": "/home/me/.ssh/id_dsa /home/me/.ssh/id_ecdsa /home/me/.ssh/id_ed25519 /home/me/.ssh/id_rsa",
+    "port": "22",
+    "serveraliveinterval": "60",
+    "user": "me",
+    "userknownhostsfile": "/home/me/.ssh/known_hosts /home/me/.ssh/known_hosts2",
+}
+"#
+        );
+    }
+
+    #[test]
     fn parse_proxy_command_tokens() {
         let mut config = Config::new();
         config.add_config_string(

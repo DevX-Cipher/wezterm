@@ -401,3 +401,12 @@ See also:
  * [how to set the PATH for Finder-launched applications](https://apple.stackexchange.com/q/51677/166425)
  * [what does launchctl config user path do?](https://stackoverflow.com/q/51636338/149111)
 
+## How do I disable ligatures?
+
+By default, wezterm enables ligature support in the font that you have selected.
+If you prefer to disable ligatures you can instruct *harfbuzz*, the underlying
+font shaping software, to disable them by adding this to your configuration:
+
+```lua
+config.harfbuzz_features = { calt=0, clig=0, liga=0 }
+```

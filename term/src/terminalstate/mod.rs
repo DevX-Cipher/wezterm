@@ -12,18 +12,18 @@ use std::num::NonZeroUsize;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::Arc;
 use terminfo::{Database, Value};
-use termwiz::cell::UnicodeVersion;
-use termwiz::escape::csi::{
+use termwiz::input::KeyboardEncoding;
+use url::Url;
+use wezterm_bidi::ParagraphDirectionHint;
+use wezterm_cell::image::ImageData;
+use wezterm_cell::UnicodeVersion;
+use wezterm_escape_parser::csi::{
     Cursor, CursorStyle, DecPrivateMode, DecPrivateModeCode, Device, Edit, EraseInDisplay,
     EraseInLine, Mode, Sgr, TabulationClear, TerminalMode, TerminalModeCode, Window, XtSmGraphics,
     XtSmGraphicsAction, XtSmGraphicsItem, XtSmGraphicsStatus, XtermKeyModifierResource,
 };
-use termwiz::escape::{OneBased, OperatingSystemCommand, CSI};
-use termwiz::image::ImageData;
-use termwiz::input::KeyboardEncoding;
-use termwiz::surface::{CursorShape, CursorVisibility, SequenceNo};
-use url::Url;
-use wezterm_bidi::ParagraphDirectionHint;
+use wezterm_escape_parser::{OneBased, OperatingSystemCommand, CSI};
+use wezterm_surface::{CursorShape, CursorVisibility, SequenceNo};
 
 mod image;
 mod iterm;

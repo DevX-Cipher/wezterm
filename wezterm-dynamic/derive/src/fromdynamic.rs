@@ -93,7 +93,7 @@ fn derive_struct(input: &DeriveInput, fields: &FieldsNamed) -> Result<TokenStrea
     let from_dynamic = match info.try_from {
         Some(try_from) => {
             quote!(
-                use std::convert::TryFrom;
+                use core::convert::TryFrom;
                 let target = <#try_from>::from_dynamic(value, options)?;
                 <#ident>::try_from(target).map_err(|e| wezterm_dynamic::Error::Message(format!("{:#}", e)))
             )
@@ -116,7 +116,7 @@ fn derive_struct(input: &DeriveInput, fields: &FieldsNamed) -> Result<TokenStrea
 
     let tokens = quote! {
         impl #impl_generics wezterm_dynamic::FromDynamic for #ident #ty_generics #bounded_where_clause {
-            fn from_dynamic(value: &wezterm_dynamic::Value, options: wezterm_dynamic::FromDynamicOptions) -> std::result::Result<Self, wezterm_dynamic::Error> {
+            fn from_dynamic(value: &wezterm_dynamic::Value, options: wezterm_dynamic::FromDynamicOptions) -> core::result::Result<Self, wezterm_dynamic::Error> {
                 use wezterm_dynamic::{Value, BorrowedKey, ObjectKeyTrait};
                 #adjust_options
                 #from_dynamic
@@ -157,7 +157,7 @@ fn derive_enum(input: &DeriveInput, enumeration: &DataEnum) -> Result<TokenStrea
     let from_dynamic = match info.try_from {
         Some(try_from) => {
             quote!(
-                use std::convert::TryFrom;
+                use core::convert::TryFrom;
                 let target = <#try_from>::from_dynamic(value, options)?;
                 <#ident>::try_from(target).map_err(|e| wezterm_dynamic::Error::Message(format!("{:#}", e)))
             )
@@ -311,7 +311,7 @@ fn derive_enum(input: &DeriveInput, enumeration: &DataEnum) -> Result<TokenStrea
 
     let tokens = quote! {
         impl wezterm_dynamic::FromDynamic for #ident {
-            fn from_dynamic(value: &wezterm_dynamic::Value, options: wezterm_dynamic::FromDynamicOptions) -> std::result::Result<Self, wezterm_dynamic::Error> {
+            fn from_dynamic(value: &wezterm_dynamic::Value, options: wezterm_dynamic::FromDynamicOptions) -> core::result::Result<Self, wezterm_dynamic::Error> {
                 use wezterm_dynamic::{Value, BorrowedKey, ObjectKeyTrait};
                 #from_dynamic
             }

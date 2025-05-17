@@ -7,16 +7,20 @@ members = [
   "deps/cairo",
   "wezterm",
   "wezterm-blob-leases",
+  "wezterm-cell",
+  "wezterm-escape-parser",
   "wezterm-dynamic",
   "wezterm-gui",
   "wezterm-mux-server",
   "wezterm-open-url",
   "wezterm-ssh",
+  "wezterm-surface",
   "wezterm-uds",
 ]
 resolver = "2"
 exclude = [
-  "termwiz/codegen"
+  "termwiz/codegen",
+  "wezterm-char-props/codegen",
 ]
 
 [profile.release]
@@ -39,7 +43,7 @@ async-task = "4.7"
 async-trait = "0.1"
 async_ossl = { path = "async_ossl" }
 backtrace = "0.3"
-base64 = "0.22"
+base64 = {version="0.22", default-features=false }
 base91 = { path = "base91" }
 battery = { path = "lua-api-crates/battery" }
 benchmarking = "0.4"
@@ -82,15 +86,15 @@ encoding_rs = "0.8"
 enum-display-derive = "0.1"
 env-bootstrap = { path = "env-bootstrap" }
 env_logger = "0.11"
-euclid = "0.22"
-fancy-regex = "0.11"
+euclid = {version="0.22", default-features=false}
+fancy-regex = {version="0.14", default-features=false, features=[]}
 fastrand = "2.0"
 filedescriptor = { version="0.8.3", path = "filedescriptor" }
 filenamegen = "0.2.6"
 filesystem = { path = "lua-api-crates/filesystem" }
-finl_unicode = "1.2"
+finl_unicode = { version = "1.3",  git="https://github.com/wez/finl_unicode.git", branch="no_std" , default-features=false, features=["categories", "grapheme_clusters"]}
 fixed = "1.23"
-fixedbitset = "0.4"
+fixedbitset = {version="0.4", default-features=false}
 flume = "0.11"
 fnv = "1.0"
 fontconfig = { path = "deps/fontconfig" }
@@ -109,7 +113,7 @@ guillotiere = "0.6"
 harfbuzz = { path = "deps/harfbuzz" }
 heapless = "0.8"
 hdrhistogram = "7.1"
-hex = "0.4"
+hex = {version="0.4", default-features=false}
 hostname = "0.4"
 http_req = "0.11"
 human-sort = "0.2"
@@ -124,7 +128,7 @@ lfucache = { path = "lfucache" }
 libc = "0.2"
 libflate = "2"
 libloading = "0.8"
-libssh-rs = "0.3.5"
+libssh-rs = "0.3.6"
 line_drawing = "0.8"
 log = "0.4"
 logging = { path = "lua-api-crates/logging" }
@@ -147,20 +151,20 @@ ntapi = "0.4"
 nucleo-matcher = "0.3"
 num = "0.4"
 num-derive = "0.4"
-num-traits = "0.2"
+num-traits = {version="0.2", default-features=false }
 objc = "0.2"
 objc2 = "0.6"
 objc2-core-graphics = "0.3"
 objc2-foundation = "0.3"
 objc2-user-notifications = "0.3"
 openssl = "0.10.57"
-ordered-float = "4.1"
+ordered-float = {version="4.1", default-features=false}
 parking_lot = "0.12"
 passfd = "0.1.6"
 percent-encoding = "2.3"
 pest = "2.7"
 pest_derive = "2.7"
-phf = "0.11"
+phf = {version="0.11", default-features=false}
 phf_codegen = "0.10"
 pkg-config = "0.3"
 plist = "1.7"
@@ -182,7 +186,7 @@ reqwest = "0.12"
 resize = "0.5"
 rstest = "0.21"
 rusqlite = "0.32"
-serde = {version="1.0", features = ["derive"]}
+serde = {version="1.0", default-features=false, features = ["derive"]}
 serde-funcs = { path = "lua-api-crates/serde-funcs" }
 serde_json = "1.0"
 serde_with = {version="2.0", features = ["chrono_0_4"]}
@@ -208,7 +212,7 @@ strsim = "0.11"
 syn = "1.0"
 tabout = { path = "tabout" }
 tar = "0.4"
-tempfile = "3.16"
+tempfile = "3.20"
 terminfo = "0.9"
 termios = "0.3"
 termwiz = { version="0.24.0", path = "termwiz" }
@@ -219,7 +223,7 @@ time-funcs = { path = "lua-api-crates/time-funcs" }
 tiny-skia = "0.11"
 tokio = "1.43"
 toml = "0.8"
-ucd-trie = "0.1"
+ucd-trie = {version="0.1", default-features=false}
 uds_windows = "1.1"
 umask = { path = "umask" }
 unicode-normalization = "0.1.24"
@@ -229,26 +233,30 @@ url-funcs = { path = "lua-api-crates/url-funcs" }
 utf8parse = "0.2"
 uuid = "1.13"
 varbincode = "0.1"
-vtparse = { version="0.7", path="vtparse" }
+vtparse = { version="0.7", path="vtparse", default-features=false }
 walkdir = "2"
 wayland-backend = "0.3.5"
 wayland-client = "0.31"
 wayland-egl = "0.32"
 wayland-protocols = "0.32"
 wayland-protocols-plasma = { version="0.3.6", features=["client"] }
-wezterm-bidi = { version="0.2.3", path = "bidi" }
+wezterm-bidi = { version="0.2.3", path = "bidi", default-features=false}
 wezterm-blob-leases = { version="0.1.1", path = "wezterm-blob-leases"}
+wezterm-cell = { path = "wezterm-cell"}
+wezterm-char-props = { path = "wezterm-char-props", default-features=false }
 wezterm-client = { path = "wezterm-client" }
-wezterm-color-types = { version="0.3", path = "color-types" }
+wezterm-color-types = { version="0.3", path = "color-types", default-features=false }
 wezterm-config-derive = { version="0.1", path="config/derive" }
-wezterm-dynamic = { version = "0.2.1", path = "wezterm-dynamic" }
+wezterm-dynamic = { version = "0.2.1", path = "wezterm-dynamic", default-features=false }
 wezterm-dynamic-derive = { version="0.1.1", path="wezterm-dynamic/derive" }
+wezterm-escape-parser = { version="0.1.0", path="wezterm-escape-parser" }
 wezterm-font = { path = "wezterm-font" }
 wezterm-gui-subcommands = { path = "wezterm-gui-subcommands" }
-wezterm-input-types = { version="0.1", path = "wezterm-input-types" }
+wezterm-input-types = { version="0.1", path = "wezterm-input-types", default-features=false }
 wezterm-mux-server-impl = { path = "wezterm-mux-server-impl" }
 wezterm-open-url = { path = "wezterm-open-url" }
 wezterm-ssh = { path = "wezterm-ssh" }
+wezterm-surface = { path = "wezterm-surface" }
 wezterm-term = { path = "term" }
 wezterm-toast-notification = { path = "wezterm-toast-notification" }
 wezterm-uds = { path = "wezterm-uds" }
