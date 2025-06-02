@@ -276,6 +276,22 @@ impl CommandBuilder {
         self.args.push(arg.as_ref().to_owned());
     }
 
+    /// If a builder is_default_prog, then this function can be used to
+    /// set the actual prog that should be used.
+    /// This is intended to facilitate plumbing through the handling
+    /// of the underlying default prog when merging together supplemental
+    /// env and cwd information.
+    /// You will not typically use this method in your own code.
+    pub fn replace_default_prog(&mut self, args: impl IntoIterator<Item = impl AsRef<OsStr>>) {
+        if !self.is_default_prog() {
+            panic!("attempted to replace_default_prog on a non-default_prog builder");
+        }
+
+        for arg in args {
+            self.args.push(arg.as_ref().to_owned());
+        }
+    }
+
     /// Append a sequence of arguments to the current command line
     pub fn args<I, S>(&mut self, args: I)
     where

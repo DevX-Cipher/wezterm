@@ -253,7 +253,7 @@ impl RemoteSshDomain {
         let config = config::configuration();
         let cmd = match command {
             Some(mut cmd) => {
-                config.apply_cmd_defaults(&mut cmd, None);
+                config.apply_cmd_defaults(&mut cmd, self.dom.default_prog.as_ref(), None);
                 cmd
             }
             None => config.build_prog(None, self.dom.default_prog.as_ref(), None)?,

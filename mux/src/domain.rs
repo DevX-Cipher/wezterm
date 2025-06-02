@@ -453,23 +453,25 @@ impl LocalDomain {
         pane_id: PaneId,
     ) -> anyhow::Result<CommandBuilder> {
         let config = configuration();
+
+        let wsl = self.resolve_wsl_domain();
+        let default_prog = wsl
+            .as_ref()
+            .map(|wsl| wsl.default_prog.as_ref())
+            .unwrap_or(config.default_prog.as_ref());
+
         let mut cmd = match command {
             Some(mut cmd) => {
-                config.apply_cmd_defaults(&mut cmd, config.default_cwd.as_ref());
+                config.apply_cmd_defaults(&mut cmd, default_prog, config.default_cwd.as_ref());
                 cmd
             }
-            None => {
-                let wsl = self.resolve_wsl_domain();
-                config.build_prog(
-                    None,
-                    wsl.as_ref()
-                        .map(|wsl| wsl.default_prog.as_ref())
-                        .unwrap_or(config.default_prog.as_ref()),
-                    wsl.as_ref()
-                        .map(|wsl| wsl.default_cwd.as_ref())
-                        .unwrap_or(config.default_cwd.as_ref()),
-                )?
-            }
+            None => config.build_prog(
+                None,
+                default_prog,
+                wsl.as_ref()
+                    .map(|wsl| wsl.default_cwd.as_ref())
+                    .unwrap_or(config.default_cwd.as_ref()),
+            )?,
         };
         if let Some(dir) = command_dir {
             cmd.cwd(dir);

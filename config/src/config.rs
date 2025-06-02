@@ -1538,16 +1538,27 @@ impl Config {
             }
         };
 
-        self.apply_cmd_defaults(&mut cmd, default_cwd);
+        self.apply_cmd_defaults(&mut cmd, None, default_cwd);
 
         Ok(cmd)
     }
 
-    pub fn apply_cmd_defaults(&self, cmd: &mut CommandBuilder, default_cwd: Option<&PathBuf>) {
+    pub fn apply_cmd_defaults(
+        &self,
+        cmd: &mut CommandBuilder,
+        default_prog: Option<&Vec<String>>,
+        default_cwd: Option<&PathBuf>,
+    ) {
         // Apply `default_cwd` only if `cwd` is not already set, allows `--cwd`
         // option to take precedence
         if let (None, Some(cwd)) = (cmd.get_cwd(), default_cwd) {
             cmd.cwd(cwd);
+        }
+
+        if let Some(default_prog) = default_prog {
+            if cmd.is_default_prog() {
+                cmd.replace_default_prog(default_prog);
+            }
         }
 
         // Augment WSLENV so that TERM related environment propagates

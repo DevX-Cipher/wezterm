@@ -25,6 +25,7 @@ dirs-next.workspace = true
 filedescriptor.workspace = true
 filenamegen.workspace = true
 gethostname.workspace = true
+hex = { workspace = true, features = ["std"] }
 libc.workspace = true
 libssh-rs = {workspace=true, features=["vendored"], optional = true}
 #libssh-rs = {path="../../libssh-rs/libssh-rs", features=["vendored"], optional = true}
@@ -33,6 +34,7 @@ portable-pty.workspace = true
 regex.workspace = true
 smol.workspace = true
 socket2.workspace = true
+sha2.workspace = true
 ssh2 = {workspace=true, features=["openssl-on-win32"], optional = true}
 thiserror.workspace = true
 wezterm-uds.workspace = true
